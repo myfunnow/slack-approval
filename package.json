@@ -1,9 +1,13 @@
 {
   "name": "slack-approval",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Custom action to send approval request to Slack",
   "scripts": {
+    "bundle": "npm run format && npm run lint && npm run check && npm run package",
+    "format": "npx @biomejs/biome format --write ./src",
+    "lint": "npx @biomejs/biome lint ./src",
+    "check": "npx @biomejs/biome check --apply ./src",
+    "package": "ncc build src/index.ts",
     "build": "tsc"
   },
   "author": "",
@@ -15,7 +19,9 @@
     "@slack/web-api": "^6.7.2"
   },
   "devDependencies": {
+    "@biomejs/biome": "1.4.1",
     "@types/node": "^18.8.4",
+    "@vercel/ncc": "^0.38.1",
     "typescript": "^4.8.4"
   },
   "volta": {
