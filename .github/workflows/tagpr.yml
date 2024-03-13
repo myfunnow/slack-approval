@@ -12,6 +12,5 @@ jobs:
       - uses: actions/checkout@v4
 
       - uses: Songmu/tagpr@v1
-        id: tagpr
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
