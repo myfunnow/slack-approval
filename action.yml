@@ -2,6 +2,20 @@ name: slack-approval
 description: Custom action to send approval request to Slack from GitHub Actions
 author: varu3
 
+inputs:
+  bot-token:
+    description: "Slack bot token"
+    required: true
+  signing-secret:
+    description: "Slack signing secret"
+    required: true
+  app-token:
+    description: "Slack app token"
+    required: true
+  channel-id:
+    description: "Slack channel ID"
+    required: true
+
 branding:
   icon: plus
   color: green
