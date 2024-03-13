@@ -1,0 +1,26 @@
+name: Test slack-approval
+
+on:
+  workflow_call:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  approval:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: slack-approval
+        uses: ./
+        with:
+          bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
+          signing-secret: ${{ secrets.SLACK_SIGNING_SECRET }}
+          app-token: ${{ secrets.SLACK_APP_TOKEN }}
+          channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
+        timeout-minutes: 5
