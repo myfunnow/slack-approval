@@ -1,36 +1,18 @@
 import * as core from "@actions/core";
 import { App, BlockAction, LogLevel } from "@slack/bolt";
 import { WebClient } from "@slack/web-api";
+import { getGitHubInfo } from "./helper/github_info_helper";
+import { SlackApprovalInputs, getInputs } from "./helper/input_helper";
 
-const token = process.env.SLACK_BOT_TOKEN || "";
-const signingSecret = process.env.SLACK_SIGNING_SECRET || "";
-const slackAppToken = process.env.SLACK_APP_TOKEN || "";
-const channel_id = process.env.SLACK_CHANNEL_ID || "";
-
-const app = new App({
-	token: token,
-	signingSecret: signingSecret,
-	appToken: slackAppToken,
-	socketMode: true,
-	port: 3000,
-	logLevel: LogLevel.DEBUG,
-});
-
-async function run(): Promise<void> {
+async function run(inputs: SlackApprovalInputs, app: App): Promise<void> {
 	try {
-		const web = new WebClient(token);
+		const web = new WebClient(inputs.botToken);
 
-		const github_server_url = process.env.GITHUB_SERVER_URL || "";
-		const github_repos = process.env.GITHUB_REPOSITORY || "";
-		const run_id = process.env.GITHUB_RUN_ID || "";
-		const actionsUrl = `${github_server_url}/${github_repos}/actions/runs/${run_id}`;
-		const workflow = process.env.GITHUB_WORKFLOW || "";
-		const runnerOS = process.env.RUNNER_OS || "";
-		const actor = process.env.GITHUB_ACTOR || "";
+		const githubInfo = getGitHubInfo();
 
 		(async () => {
 			await web.chat.postMessage({
-				channel: channel_id,
+				channel: inputs.channelId,
 				text: "GitHub Actions Approval request",
 				blocks: [
 					{
@@ -45,27 +27,27 @@ async function run(): Promise<void> {
 						fields: [
 							{
 								type: "mrkdwn",
-								text: `*GitHub Actor:*\n${actor}`,
+								text: `*GitHub Actor:*\n${githubInfo.actor}`,
 							},
 							{
 								type: "mrkdwn",
-								text: `*Repos:*\n${github_server_url}/${github_repos}`,
+								text: `*Repos:*\n${githubInfo.serverUrl}/${githubInfo.repo}`,
 							},
 							{
 								type: "mrkdwn",
-								text: `*Actions URL:*\n${actionsUrl}`,
+								text: `*Actions URL:*\n${githubInfo.actionUrl}`,
 							},
 							{
 								type: "mrkdwn",
-								text: `*GITHUB_RUN_ID:*\n${run_id}`,
+								text: `*GITHUB_RUN_ID:*\n${githubInfo.runId}`,
 							},
 							{
 								type: "mrkdwn",
-								text: `*Workflow:*\n${workflow}`,
+								text: `*Workflow:*\n${githubInfo.workflow}`,
 							},
 							{
 								type: "mrkdwn",
-								text: `*RunnerOS:*\n${runnerOS}`,
+								text: `*RunnerOS:*\n${githubInfo.runnerOS}`,
 							},
 						],
 					},
@@ -165,4 +147,19 @@ async function run(): Promise<void> {
 	}
 }
 
-run();
+async function main() {
+	const inputs = getInputs();
+
+	const app = new App({
+		token: inputs.botToken,
+		signingSecret: inputs.signingSecret,
+		appToken: inputs.appToken,
+		socketMode: true,
+		port: 3000,
+		logLevel: LogLevel.DEBUG,
+	});
+
+	run(inputs, app);
+}
+
+main();

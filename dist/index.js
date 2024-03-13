@@ -24478,6 +24478,30 @@ var Writable = (__nccwpck_require__(12781).Writable);
 var assert = __nccwpck_require__(39491);
 var debug = __nccwpck_require__(31133);
 
+// Whether to use the native URL object or the legacy url module
+var useNativeURL = false;
+try {
+  assert(new URL());
+}
+catch (error) {
+  useNativeURL = error.code === "ERR_INVALID_URL";
+}
+
+// URL fields to preserve in copy operations
+var preservedUrlFields = [
+  "auth",
+  "host",
+  "hostname",
+  "href",
+  "path",
+  "pathname",
+  "port",
+  "protocol",
+  "query",
+  "search",
+  "hash",
+];
+
 // Create handlers that pass events from native requests
 var events = ["abort", "aborted", "connect", "error", "socket", "timeout"];
 var eventHandlers = Object.create(null);
@@ -24487,19 +24511,20 @@ events.forEach(function (event) {
   };
 });
 
+// Error types with codes
 var InvalidUrlError = createErrorType(
   "ERR_INVALID_URL",
   "Invalid URL",
   TypeError
 );
-// Error types with codes
 var RedirectionError = createErrorType(
   "ERR_FR_REDIRECTION_FAILURE",
   "Redirected request failed"
 );
 var TooManyRedirectsError = createErrorType(
   "ERR_FR_TOO_MANY_REDIRECTS",
-  "Maximum number of redirects exceeded"
+  "Maximum number of redirects exceeded",
+  RedirectionError
 );
 var MaxBodyLengthExceededError = createErrorType(
   "ERR_FR_MAX_BODY_LENGTH_EXCEEDED",
@@ -24534,7 +24559,13 @@ function RedirectableRequest(options, responseCallback) {
   // React to responses of native requests
   var self = this;
   this._onNativeResponse = function (response) {
-    self._processResponse(response);
+    try {
+      self._processResponse(response);
+    }
+    catch (cause) {
+      self.emit("error", cause instanceof RedirectionError ?
+        cause : new RedirectionError({ cause: cause }));
+    }
   };
 
   // Perform the first request
@@ -24752,8 +24783,7 @@ RedirectableRequest.prototype._performRequest = function () {
   var protocol = this._options.protocol;
   var nativeProtocol = this._options.nativeProtocols[protocol];
   if (!nativeProtocol) {
-    this.emit("error", new TypeError("Unsupported protocol " + protocol));
-    return;
+    throw new TypeError("Unsupported protocol " + protocol);
   }
 
   // If specified, use the agent corresponding to the protocol
@@ -24852,8 +24882,7 @@ RedirectableRequest.prototype._processResponse = function (response) {
   // RFC7231§6.4: A client SHOULD detect and intervene
   // in cyclical redirections (i.e., "infinite" redirection loops).
   if (++this._redirectCount > this._options.maxRedirects) {
-    this.emit("error", new TooManyRedirectsError());
-    return;
+    throw new TooManyRedirectsError();
   }
 
   // Store the request headers if applicable
@@ -24887,33 +24916,23 @@ RedirectableRequest.prototype._processResponse = function (response) {
   var currentHostHeader = removeMatchingHeaders(/^host$/i, this._options.headers);
 
   // If the redirect is relative, carry over the host of the last request
-  var currentUrlParts = url.parse(this._currentUrl);
+  var currentUrlParts = parseUrl(this._currentUrl);
   var currentHost = currentHostHeader || currentUrlParts.host;
   var currentUrl = /^\w+:/.test(location) ? this._currentUrl :
     url.format(Object.assign(currentUrlParts, { host: currentHost }));
 
-  // Determine the URL of the redirection
-  var redirectUrl;
-  try {
-    redirectUrl = url.resolve(currentUrl, location);
-  }
-  catch (cause) {
-    this.emit("error", new RedirectionError({ cause: cause }));
-    return;
-  }
-
   // Create the redirected request
-  debug("redirecting to", redirectUrl);
+  var redirectUrl = resolveUrl(location, currentUrl);
+  debug("redirecting to", redirectUrl.href);
   this._isRedirect = true;
-  var redirectUrlParts = url.parse(redirectUrl);
-  Object.assign(this._options, redirectUrlParts);
+  spreadUrlObject(redirectUrl, this._options);
 
   // Drop confidential headers when redirecting to a less secure protocol
   // or to a different domain that is not a superdomain
-  if (redirectUrlParts.protocol !== currentUrlParts.protocol &&
-     redirectUrlParts.protocol !== "https:" ||
-     redirectUrlParts.host !== currentHost &&
-     !isSubdomain(redirectUrlParts.host, currentHost)) {
+  if (redirectUrl.protocol !== currentUrlParts.protocol &&
+     redirectUrl.protocol !== "https:" ||
+     redirectUrl.host !== currentHost &&
+     !isSubdomain(redirectUrl.host, currentHost)) {
     removeMatchingHeaders(/^(?:authorization|cookie)$/i, this._options.headers);
   }
 
@@ -24928,23 +24947,12 @@ RedirectableRequest.prototype._processResponse = function (response) {
       method: method,
       headers: requestHeaders,
     };
-    try {
-      beforeRedirect(this._options, responseDetails, requestDetails);
-    }
-    catch (err) {
-      this.emit("error", err);
-      return;
-    }
+    beforeRedirect(this._options, responseDetails, requestDetails);
     this._sanitizeOptions(this._options);
   }
 
   // Perform the redirected request
-  try {
-    this._performRequest();
-  }
-  catch (cause) {
-    this.emit("error", new RedirectionError({ cause: cause }));
-  }
+  this._performRequest();
 };
 
 // Wraps the key/value object of protocols with redirect functionality
@@ -24964,27 +24972,16 @@ function wrap(protocols) {
 
     // Executes a request, following redirects
     function request(input, options, callback) {
-      // Parse parameters
-      if (isString(input)) {
-        var parsed;
-        try {
-          parsed = urlToOptions(new URL(input));
-        }
-        catch (err) {
-          /* istanbul ignore next */
-          parsed = url.parse(input);
-        }
-        if (!isString(parsed.protocol)) {
-          throw new InvalidUrlError({ input });
-        }
-        input = parsed;
+      // Parse parameters, ensuring that input is an object
+      if (isURL(input)) {
+        input = spreadUrlObject(input);
       }
-      else if (URL && (input instanceof URL)) {
-        input = urlToOptions(input);
+      else if (isString(input)) {
+        input = spreadUrlObject(parseUrl(input));
       }
       else {
         callback = options;
-        options = input;
+        options = validateUrl(input);
         input = { protocol: protocol };
       }
       if (isFunction(options)) {
@@ -25023,27 +25020,57 @@ function wrap(protocols) {
   return exports;
 }
 
-/* istanbul ignore next */
 function noop() { /* empty */ }
 
-// from https://github.com/nodejs/node/blob/master/lib/internal/url.js
-function urlToOptions(urlObject) {
-  var options = {
-    protocol: urlObject.protocol,
-    hostname: urlObject.hostname.startsWith("[") ?
-      /* istanbul ignore next */
-      urlObject.hostname.slice(1, -1) :
-      urlObject.hostname,
-    hash: urlObject.hash,
-    search: urlObject.search,
-    pathname: urlObject.pathname,
-    path: urlObject.pathname + urlObject.search,
-    href: urlObject.href,
-  };
-  if (urlObject.port !== "") {
-    options.port = Number(urlObject.port);
+function parseUrl(input) {
+  var parsed;
+  /* istanbul ignore else */
+  if (useNativeURL) {
+    parsed = new URL(input);
   }
-  return options;
+  else {
+    // Ensure the URL is valid and absolute
+    parsed = validateUrl(url.parse(input));
+    if (!isString(parsed.protocol)) {
+      throw new InvalidUrlError({ input });
+    }
+  }
+  return parsed;
+}
+
+function resolveUrl(relative, base) {
+  /* istanbul ignore next */
+  return useNativeURL ? new URL(relative, base) : parseUrl(url.resolve(base, relative));
+}
+
+function validateUrl(input) {
+  if (/^\[/.test(input.hostname) && !/^\[[:0-9a-f]+\]$/i.test(input.hostname)) {
+    throw new InvalidUrlError({ input: input.href || input });
+  }
+  if (/^\[/.test(input.host) && !/^\[[:0-9a-f]+\](:\d+)?$/i.test(input.host)) {
+    throw new InvalidUrlError({ input: input.href || input });
+  }
+  return input;
+}
+
+function spreadUrlObject(urlObject, target) {
+  var spread = target || {};
+  for (var key of preservedUrlFields) {
+    spread[key] = urlObject[key];
+  }
+
+  // Fix IPv6 hostname
+  if (spread.hostname.startsWith("[")) {
+    spread.hostname = spread.hostname.slice(1, -1);
+  }
+  // Ensure port is a number
+  if (spread.port !== "") {
+    spread.port = Number(spread.port);
+  }
+  // Concatenate path
+  spread.path = spread.search ? spread.pathname + spread.search : spread.pathname;
+
+  return spread;
 }
 
 function removeMatchingHeaders(regex, headers) {
@@ -25069,8 +25096,16 @@ function createErrorType(code, message, baseClass) {
 
   // Attach constructor and set default properties
   CustomError.prototype = new (baseClass || Error)();
-  CustomError.prototype.constructor = CustomError;
-  CustomError.prototype.name = "Error [" + code + "]";
+  Object.defineProperties(CustomError.prototype, {
+    constructor: {
+      value: CustomError,
+      enumerable: false,
+    },
+    name: {
+      value: "Error [" + code + "]",
+      enumerable: false,
+    },
+  });
   return CustomError;
 }
 
@@ -25098,6 +25133,10 @@ function isFunction(value) {
 
 function isBuffer(value) {
   return typeof value === "object" && ("length" in value);
+}
+
+function isURL(value) {
+  return URL && value instanceof URL;
 }
 
 // Exports
@@ -57285,6 +57324,9 @@ function httpRedirectFetch (fetchParams, response) {
     // https://fetch.spec.whatwg.org/#cors-non-wildcard-request-header-name
     request.headersList.delete('authorization')
 
+    // https://fetch.spec.whatwg.org/#authentication-entries
+    request.headersList.delete('proxy-authorization', true)
+
     // "Cookie" and "Host" are forbidden request-headers, which undici doesn't implement.
     request.headersList.delete('cookie')
     request.headersList.delete('host')
@@ -72982,6 +73024,84 @@ try {
 
 /***/ }),
 
+/***/ 70885:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getGitHubInfo = void 0;
+function getGitHubInfo() {
+    const serverUrl = process.env.GITHUB_SERVER_URL || "";
+    const repo = process.env.GITHUB_REPOSITORY || "";
+    const runId = process.env.GITHUB_RUN_ID || "";
+    const actionUrl = `${serverUrl}/${repo}/actions/runs/${runId}`;
+    const workflow = process.env.GITHUB_WORKFLOW || "";
+    const runnerOS = process.env.RUNNER_OS || "";
+    const actor = process.env.GITHUB_ACTOR || "";
+    return {
+        serverUrl,
+        repo,
+        runId,
+        actionUrl,
+        workflow,
+        runnerOS,
+        actor,
+    };
+}
+exports.getGitHubInfo = getGitHubInfo;
+
+
+/***/ }),
+
+/***/ 9941:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.getInputs = void 0;
+const core = __importStar(__nccwpck_require__(42186));
+function getInputs() {
+    const botToken = core.getInput("bot-token");
+    const signingSecret = core.getInput("signing-secret");
+    const appToken = core.getInput("app-token");
+    const channelId = core.getInput("channel-id");
+    return {
+        botToken,
+        signingSecret,
+        appToken,
+        channelId,
+    };
+}
+exports.getInputs = getInputs;
+
+
+/***/ }),
+
 /***/ 6144:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -73023,32 +73143,16 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(42186));
 const bolt_1 = __nccwpck_require__(23311);
 const web_api_1 = __nccwpck_require__(60431);
-const token = process.env.SLACK_BOT_TOKEN || "";
-const signingSecret = process.env.SLACK_SIGNING_SECRET || "";
-const slackAppToken = process.env.SLACK_APP_TOKEN || "";
-const channel_id = process.env.SLACK_CHANNEL_ID || "";
-const app = new bolt_1.App({
-    token: token,
-    signingSecret: signingSecret,
-    appToken: slackAppToken,
-    socketMode: true,
-    port: 3000,
-    logLevel: bolt_1.LogLevel.DEBUG,
-});
-function run() {
+const github_info_helper_1 = __nccwpck_require__(70885);
+const input_helper_1 = __nccwpck_require__(9941);
+function run(inputs, app) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
-            const web = new web_api_1.WebClient(token);
-            const github_server_url = process.env.GITHUB_SERVER_URL || "";
-            const github_repos = process.env.GITHUB_REPOSITORY || "";
-            const run_id = process.env.GITHUB_RUN_ID || "";
-            const actionsUrl = `${github_server_url}/${github_repos}/actions/runs/${run_id}`;
-            const workflow = process.env.GITHUB_WORKFLOW || "";
-            const runnerOS = process.env.RUNNER_OS || "";
-            const actor = process.env.GITHUB_ACTOR || "";
+            const web = new web_api_1.WebClient(inputs.botToken);
+            const githubInfo = (0, github_info_helper_1.getGitHubInfo)();
             (() => __awaiter(this, void 0, void 0, function* () {
                 yield web.chat.postMessage({
-                    channel: channel_id,
+                    channel: inputs.channelId,
                     text: "GitHub Actions Approval request",
                     blocks: [
                         {
@@ -73063,27 +73167,27 @@ function run() {
                             fields: [
                                 {
                                     type: "mrkdwn",
-                                    text: `*GitHub Actor:*\n${actor}`,
+                                    text: `*GitHub Actor:*\n${githubInfo.actor}`,
                                 },
                                 {
                                     type: "mrkdwn",
-                                    text: `*Repos:*\n${github_server_url}/${github_repos}`,
+                                    text: `*Repos:*\n${githubInfo.serverUrl}/${githubInfo.repo}`,
                                 },
                                 {
                                     type: "mrkdwn",
-                                    text: `*Actions URL:*\n${actionsUrl}`,
+                                    text: `*Actions URL:*\n${githubInfo.actionUrl}`,
                                 },
                                 {
                                     type: "mrkdwn",
-                                    text: `*GITHUB_RUN_ID:*\n${run_id}`,
+                                    text: `*GITHUB_RUN_ID:*\n${githubInfo.runId}`,
                                 },
                                 {
                                     type: "mrkdwn",
-                                    text: `*Workflow:*\n${workflow}`,
+                                    text: `*Workflow:*\n${githubInfo.workflow}`,
                                 },
                                 {
                                     type: "mrkdwn",
-                                    text: `*RunnerOS:*\n${runnerOS}`,
+                                    text: `*RunnerOS:*\n${githubInfo.runnerOS}`,
                                 },
                             ],
                         },
@@ -73176,7 +73280,21 @@ function run() {
         }
     });
 }
-run();
+function main() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const inputs = (0, input_helper_1.getInputs)();
+        const app = new bolt_1.App({
+            token: inputs.botToken,
+            signingSecret: inputs.signingSecret,
+            appToken: inputs.appToken,
+            socketMode: true,
+            port: 3000,
+            logLevel: bolt_1.LogLevel.DEBUG,
+        });
+        run(inputs, app);
+    });
+}
+main();
 
 
 /***/ }),
