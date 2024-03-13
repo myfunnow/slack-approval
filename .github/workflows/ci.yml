@@ -2,6 +2,14 @@ name: CI
 
 on:
   pull_request:
+    paths:
+      - .github/workflows/ci.yml
+      - src/**
+      - .gitignore
+      - package-lock.json
+      - package.json
+      - tsconfig.json
+
   push:
     branches:
       - main
