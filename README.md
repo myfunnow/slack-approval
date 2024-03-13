@@ -20,23 +20,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: send approval
-        uses: varu3/slack-approval@main
-        env:
-          SLACK_APP_TOKEN: ${{ secrets.SLACK_APP_TOKEN }}
-          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-          SLACK_SIGNING_SECRET: ${{ secrets.SLACK_SIGNING_SECRET }}
-          SLACK_CHANNEL_ID: ${{ secrets.SLACK_CHANNEL_ID }}
+        uses: Takashicc/slack-approval@main
+        with:
+          bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
+          signing-secret: ${{ secrets.SLACK_SIGNING_SECRET }}
+          app-token: ${{ secrets.SLACK_APP_TOKEN }}
+          channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
         timeout-minutes: 10
 ```
 
-- Set environment variables
-  - `SLACK_APP_TOKEN`
-    - App-level tokens on `Basic Information page`. (starting with `xapp-` )
-  - `SLACK_BOT_TOKEN`
+- Set args
+  - `bot-token`
     - Bot-level tokens on `OAuth & Permissions page`. (starting with `xoxb-` )
-  - `SLACK_SIGNING_SECRET`
+  - `signing-secret`
     - Signing Secret on `Basic Information page`.
-  - `SLACK_CHANNEL_ID`
+  - `app-token`
+    - App-level tokens on `Basic Information page`. (starting with `xapp-` )
+  - `channel-id`
     - Channel ID for which you want to send approval.
 
 - Set `timeout-minutes`
