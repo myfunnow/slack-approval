@@ -76934,7 +76934,7 @@ function run(inputs, app) {
         try {
             const web = new web_api_1.WebClient(inputs.botToken);
             const githubInfo = (0, github_info_helper_1.getGitHubInfo)();
-            let title;
+            let title = "";
             if ((0, Option_1.isSome)(inputs.mentionTo)) {
                 title = `<@${inputs.mentionTo}>\n`;
             }
@@ -76942,8 +76942,14 @@ function run(inputs, app) {
             (() => __awaiter(this, void 0, void 0, function* () {
                 yield web.chat.postMessage({
                     channel: inputs.channelId,
-                    text: title,
                     blocks: [
+                        {
+                            type: "section",
+                            text: {
+                                type: "mrkdwn",
+                                text: title,
+                            },
+                        },
                         {
                             type: "section",
                             fields: [

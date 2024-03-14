@@ -11,7 +11,7 @@ async function run(inputs: SlackApprovalInputs, app: App): Promise<void> {
 
 		const githubInfo = getGitHubInfo();
 
-		let title;
+		let title = "";
 		if (isSome(inputs.mentionTo)) {
 			title = `<@${inputs.mentionTo}>\n`;
 		}
@@ -20,8 +20,14 @@ async function run(inputs: SlackApprovalInputs, app: App): Promise<void> {
 		(async () => {
 			await web.chat.postMessage({
 				channel: inputs.channelId,
-				text: title,
 				blocks: [
+					{
+						type: "section",
+						text: {
+							type: "mrkdwn",
+							text: title,
+						},
+					},
 					{
 						type: "section",
 						fields: [
