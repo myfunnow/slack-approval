@@ -1,6 +1,7 @@
 import * as core from "@actions/core";
 import { App, BlockAction, LogLevel } from "@slack/bolt";
 import { WebClient } from "@slack/web-api";
+import { isSome } from "fp-ts/lib/Option";
 import { getGitHubInfo } from "./helper/github_info_helper";
 import { SlackApprovalInputs, getInputs } from "./helper/input_helper";
 
@@ -10,10 +11,16 @@ async function run(inputs: SlackApprovalInputs, app: App): Promise<void> {
 
 		const githubInfo = getGitHubInfo();
 
+		let title;
+		if (isSome(inputs.mentionTo)) {
+			title = `<@${inputs.mentionTo}>\n`;
+		}
+		title += "*GitHub Action Approval request*";
+
 		(async () => {
 			await web.chat.postMessage({
 				channel: inputs.channelId,
-				text: `<@${inputs.mentionTo}>\n*GitHub Action Approval request*`,
+				text: title,
 				blocks: [
 					{
 						type: "section",
