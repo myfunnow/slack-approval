@@ -13,7 +13,7 @@ async function run(inputs: SlackApprovalInputs, app: App): Promise<void> {
 
 		let title = "";
 		if (isSome(inputs.mentionTo)) {
-			title = `<@${inputs.mentionTo}>\n`;
+			title = `<@${inputs.mentionTo.value}>\n`;
 		}
 		title += "*GitHub Action Approval request*";
 

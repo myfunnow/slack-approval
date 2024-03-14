@@ -76936,7 +76936,7 @@ function run(inputs, app) {
             const githubInfo = (0, github_info_helper_1.getGitHubInfo)();
             let title = "";
             if ((0, Option_1.isSome)(inputs.mentionTo)) {
-                title = `<@${inputs.mentionTo}>\n`;
+                title = `<@${inputs.mentionTo.value}>\n`;
             }
             title += "*GitHub Action Approval request*";
             (() => __awaiter(this, void 0, void 0, function* () {
