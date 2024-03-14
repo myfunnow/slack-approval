@@ -73090,11 +73090,13 @@ function getInputs() {
     const signingSecret = core.getInput("signing-secret");
     const appToken = core.getInput("app-token");
     const channelId = core.getInput("channel-id");
+    const mentionTo = core.getInput("mention-to");
     return {
         botToken,
         signingSecret,
         appToken,
         channelId,
+        mentionTo,
     };
 }
 exports.getInputs = getInputs;
@@ -73153,15 +73155,8 @@ function run(inputs, app) {
             (() => __awaiter(this, void 0, void 0, function* () {
                 yield web.chat.postMessage({
                     channel: inputs.channelId,
-                    text: "GitHub Actions Approval request",
+                    text: `<@${inputs.mentionTo}>\n*GitHub Action Approval request*`,
                     blocks: [
-                        {
-                            type: "section",
-                            text: {
-                                type: "mrkdwn",
-                                text: "GitHub Actions Approval Request",
-                            },
-                        },
                         {
                             type: "section",
                             fields: [

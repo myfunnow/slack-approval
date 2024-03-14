@@ -23,4 +23,5 @@ jobs:
           signing-secret: ${{ secrets.SLACK_SIGNING_SECRET }}
           app-token: ${{ secrets.SLACK_APP_TOKEN }}
           channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
+          mention-to: ${{ secrets.SLACK_MENTION_TO }}
         timeout-minutes: 5

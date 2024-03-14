@@ -13,15 +13,8 @@ async function run(inputs: SlackApprovalInputs, app: App): Promise<void> {
 		(async () => {
 			await web.chat.postMessage({
 				channel: inputs.channelId,
-				text: "GitHub Actions Approval request",
+				text: `<@${inputs.mentionTo}>\n*GitHub Action Approval request*`,
 				blocks: [
-					{
-						type: "section",
-						text: {
-							type: "mrkdwn",
-							text: "GitHub Actions Approval Request",
-						},
-					},
 					{
 						type: "section",
 						fields: [
