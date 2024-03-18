@@ -15,7 +15,7 @@ inputs:
   channel-id:
     description: "Slack channel ID"
     required: true
-  mention-to:
+  mention-to-user:
     description: "Slack user ID to mention"
     required: false
 

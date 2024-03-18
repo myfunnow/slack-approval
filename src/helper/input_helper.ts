@@ -6,7 +6,7 @@ export type SlackApprovalInputs = {
 	signingSecret: string;
 	appToken: string;
 	channelId: string;
-	mentionTo: Option<string>;
+	mentionToUser: Option<string>;
 };
 
 export function getInputs(): SlackApprovalInputs {
@@ -14,14 +14,14 @@ export function getInputs(): SlackApprovalInputs {
 	const signingSecret = getRequiredInput("signing-secret");
 	const appToken = getRequiredInput("app-token");
 	const channelId = getRequiredInput("channel-id");
-	const mentionTo = getOptionalInput("mention-to");
+	const mentionToUser = getOptionalInput("mention-to-user");
 
 	return {
 		botToken,
 		signingSecret,
 		appToken,
 		channelId,
-		mentionTo,
+		mentionToUser,
 	};
 }
 

@@ -26,7 +26,7 @@ jobs:
           signing-secret: ${{ secrets.SLACK_SIGNING_SECRET }}
           app-token: ${{ secrets.SLACK_APP_TOKEN }}
           channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
-          mention-to: ${{ secrets.SLACK_MENTION_TO }}
+          mention-to-user: ${{ secrets.SLACK_MENTION_TO_USER }}
         timeout-minutes: 10
 ```
 
@@ -39,7 +39,7 @@ jobs:
     - App-level tokens on `Basic Information page`. (starting with `xapp-` )
   - `channel-id`
     - Channel ID for which you want to send approval.
-  - `mention-to`
+  - `mention-to-user`
     - Optional. Slack user ID to mention.
 
 - Set `timeout-minutes`

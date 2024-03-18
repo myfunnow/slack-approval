@@ -12,8 +12,8 @@ async function run(inputs: SlackApprovalInputs, app: App): Promise<void> {
 		const githubInfo = getGitHubInfo();
 
 		let title = "";
-		if (isSome(inputs.mentionTo)) {
-			title = `<@${inputs.mentionTo.value}>\n`;
+		if (isSome(inputs.mentionToUser)) {
+			title = `<@${inputs.mentionToUser.value}>\n`;
 		}
 		title += "*GitHub Action Approval request*";
 
