@@ -76862,12 +76862,14 @@ function getInputs() {
     const appToken = getRequiredInput("app-token");
     const channelId = getRequiredInput("channel-id");
     const mentionToUser = getOptionalInput("mention-to-user");
+    const mentionToGroup = getOptionalInput("mention-to-group");
     return {
         botToken,
         signingSecret,
         appToken,
         channelId,
         mentionToUser,
+        mentionToGroup,
     };
 }
 exports.getInputs = getInputs;
@@ -76936,7 +76938,10 @@ function run(inputs, app) {
             const githubInfo = (0, github_info_helper_1.getGitHubInfo)();
             let title = "";
             if ((0, Option_1.isSome)(inputs.mentionToUser)) {
-                title = `<@${inputs.mentionToUser.value}>\n`;
+                title += `<@${inputs.mentionToUser.value}>\n`;
+            }
+            if ((0, Option_1.isSome)(inputs.mentionToGroup)) {
+                title += `<!subteam^${inputs.mentionToGroup.value}>\n`;
             }
             title += "*GitHub Action Approval request*";
             (() => __awaiter(this, void 0, void 0, function* () {

@@ -18,6 +18,9 @@ inputs:
   mention-to-user:
     description: "Slack user ID to mention"
     required: false
+  mention-to-group:
+    description: "Slack group ID to mention"
+    required: false
 
 branding:
   icon: plus
