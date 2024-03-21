@@ -28,6 +28,7 @@ jobs:
           channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
           mention-to-user: ${{ secrets.SLACK_MENTION_TO_USER }}
           mention-to-group: ${{ secrets.SLACK_MENTION_TO_GROUP }}
+          authorized-users: ${{ secrets.SLACK_AUTHORIZED_USERS }}
         timeout-minutes: 10
 ```
 
@@ -44,6 +45,10 @@ jobs:
     - Optional. Slack user ID to mention.
   - `mention-to-group`
     - Optional. Slack group ID to mention.
+  - `authorized-users`
+    - Optional. Slack user IDs who are authorized to approve or reject. Comma separated.
+    - e.g.,
+      - `authorized-users: xxxxxx,yyyyyy`
 
 - Set `timeout-minutes`
   - Set the time to wait for approval.

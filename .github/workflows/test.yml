@@ -25,4 +25,5 @@ jobs:
           channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
           mention-to-user: ${{ secrets.SLACK_MENTION_TO_USER }}
           mention-to-group: ${{ secrets.SLACK_MENTION_TO_GROUP }}
+          authorized-users: ${{ secrets.SLACK_AUTHORIZED_USERS }}
         timeout-minutes: 5

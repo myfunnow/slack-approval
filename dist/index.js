@@ -24933,7 +24933,7 @@ RedirectableRequest.prototype._processResponse = function (response) {
      redirectUrl.protocol !== "https:" ||
      redirectUrl.host !== currentHost &&
      !isSubdomain(redirectUrl.host, currentHost)) {
-    removeMatchingHeaders(/^(?:authorization|cookie)$/i, this._options.headers);
+    removeMatchingHeaders(/^(?:(?:proxy-)?authorization|cookie)$/i, this._options.headers);
   }
 
   // Evaluate the beforeRedirect callback
@@ -76794,6 +76794,26 @@ try {
 
 /***/ }),
 
+/***/ 69042:
+/***/ ((__unused_webpack_module, exports) => {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.Inputs = void 0;
+exports.Inputs = {
+    BotToken: "bot-token",
+    SigningSecret: "signing-secret",
+    AppToken: "app-token",
+    ChannelId: "channel-id",
+    MentionToUser: "mention-to-user",
+    MentionToGroup: "mention-to-group",
+    AuthorizedUsers: "authorized-users",
+};
+
+
+/***/ }),
+
 /***/ 70885:
 /***/ ((__unused_webpack_module, exports) => {
 
@@ -76856,13 +76876,15 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 exports.getInputs = void 0;
 const core = __importStar(__nccwpck_require__(42186));
 const Option_1 = __nccwpck_require__(2569);
+const constants_1 = __nccwpck_require__(69042);
 function getInputs() {
-    const botToken = getRequiredInput("bot-token");
-    const signingSecret = getRequiredInput("signing-secret");
-    const appToken = getRequiredInput("app-token");
-    const channelId = getRequiredInput("channel-id");
-    const mentionToUser = getOptionalInput("mention-to-user");
-    const mentionToGroup = getOptionalInput("mention-to-group");
+    const botToken = getRequiredInput(constants_1.Inputs.BotToken);
+    const signingSecret = getRequiredInput(constants_1.Inputs.SigningSecret);
+    const appToken = getRequiredInput(constants_1.Inputs.AppToken);
+    const channelId = getRequiredInput(constants_1.Inputs.ChannelId);
+    const mentionToUser = getOptionalInput(constants_1.Inputs.MentionToUser);
+    const mentionToGroup = getOptionalInput(constants_1.Inputs.MentionToGroup);
+    const authorizedUsers = getOptionalListInput(constants_1.Inputs.AuthorizedUsers);
     return {
         botToken,
         signingSecret,
@@ -76870,6 +76892,7 @@ function getInputs() {
         channelId,
         mentionToUser,
         mentionToGroup,
+        authorizedUsers,
     };
 }
 exports.getInputs = getInputs;
@@ -76882,6 +76905,18 @@ function getOptionalInput(name) {
         return Option_1.none;
     }
     return (0, Option_1.some)(value);
+}
+function getOptionalListInput(name) {
+    const value = core.getInput(name);
+    if (value === "") {
+        return Option_1.none;
+    }
+    const res = [];
+    const values = value.split(",");
+    for (const v of values) {
+        res.push(v.trim());
+    }
+    return (0, Option_1.some)(res);
 }
 
 
@@ -77015,21 +77050,32 @@ function run(inputs, app) {
                 });
             }))();
             app.action("slack-approval-approve", ({ ack, client, body, logger }) => __awaiter(this, void 0, void 0, function* () {
-                var _a, _b, _c;
+                var _a, _b;
                 yield ack();
+                const blockAction = body;
+                const userId = blockAction.user.id;
+                const ts = ((_a = blockAction.message) === null || _a === void 0 ? void 0 : _a.ts) || "";
+                if (!isAuthorizedUser(userId, inputs.authorizedUsers)) {
+                    yield client.chat.postMessage({
+                        channel: inputs.channelId,
+                        thread_ts: ts,
+                        text: `You are not authorized to approve this action: <@${userId}>`,
+                    });
+                    return;
+                }
                 try {
-                    const response_blocks = (_a = body.message) === null || _a === void 0 ? void 0 : _a.blocks;
+                    const response_blocks = (_b = blockAction.message) === null || _b === void 0 ? void 0 : _b.blocks;
                     response_blocks.pop();
                     response_blocks.push({
                         type: "section",
                         text: {
                             type: "mrkdwn",
-                            text: `Approved by <@${body.user.id}> `,
+                            text: `Approved by <@${userId}> `,
                         },
                     });
                     yield client.chat.update({
-                        channel: ((_b = body.channel) === null || _b === void 0 ? void 0 : _b.id) || "",
-                        ts: ((_c = body.message) === null || _c === void 0 ? void 0 : _c.ts) || "",
+                        channel: inputs.channelId,
+                        ts: ts,
                         blocks: response_blocks,
                     });
                 }
@@ -77039,21 +77085,32 @@ function run(inputs, app) {
                 process.exit(0);
             }));
             app.action("slack-approval-reject", ({ ack, client, body, logger }) => __awaiter(this, void 0, void 0, function* () {
-                var _d, _e, _f;
+                var _c, _d;
                 yield ack();
+                const blockAction = body;
+                const userId = blockAction.user.id;
+                const ts = ((_c = blockAction.message) === null || _c === void 0 ? void 0 : _c.ts) || "";
+                if (!isAuthorizedUser(userId, inputs.authorizedUsers)) {
+                    yield client.chat.postMessage({
+                        channel: inputs.channelId,
+                        thread_ts: ts,
+                        text: `You are not authorized to reject this action: <@${userId}>`,
+                    });
+                    return;
+                }
                 try {
-                    const response_blocks = (_d = body.message) === null || _d === void 0 ? void 0 : _d.blocks;
+                    const response_blocks = (_d = blockAction.message) === null || _d === void 0 ? void 0 : _d.blocks;
                     response_blocks.pop();
                     response_blocks.push({
                         type: "section",
                         text: {
                             type: "mrkdwn",
-                            text: `Rejected by <@${body.user.id}>`,
+                            text: `Rejected by <@${userId}>`,
                         },
                     });
                     yield client.chat.update({
-                        channel: ((_e = body.channel) === null || _e === void 0 ? void 0 : _e.id) || "",
-                        ts: ((_f = body.message) === null || _f === void 0 ? void 0 : _f.ts) || "",
+                        channel: inputs.channelId,
+                        ts: ts,
                         blocks: response_blocks,
                     });
                 }
@@ -77072,6 +77129,12 @@ function run(inputs, app) {
                 core.setFailed(error.message);
         }
     });
+}
+function isAuthorizedUser(userId, authorizedUsers) {
+    if ((0, Option_1.isNone)(authorizedUsers)) {
+        return true;
+    }
+    return authorizedUsers.value.includes(userId);
 }
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
