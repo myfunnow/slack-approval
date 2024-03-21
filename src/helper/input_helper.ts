@@ -1,5 +1,6 @@
 import * as core from "@actions/core";
 import { Option, none, some } from "fp-ts/lib/Option";
+import { Inputs } from "../constants";
 
 export type SlackApprovalInputs = {
 	botToken: string;
@@ -8,15 +9,17 @@ export type SlackApprovalInputs = {
 	channelId: string;
 	mentionToUser: Option<string>;
 	mentionToGroup: Option<string>;
+	authorizedUsers: Option<string[]>;
 };
 
 export function getInputs(): SlackApprovalInputs {
-	const botToken = getRequiredInput("bot-token");
-	const signingSecret = getRequiredInput("signing-secret");
-	const appToken = getRequiredInput("app-token");
-	const channelId = getRequiredInput("channel-id");
-	const mentionToUser = getOptionalInput("mention-to-user");
-	const mentionToGroup = getOptionalInput("mention-to-group");
+	const botToken = getRequiredInput(Inputs.BotToken);
+	const signingSecret = getRequiredInput(Inputs.SigningSecret);
+	const appToken = getRequiredInput(Inputs.AppToken);
+	const channelId = getRequiredInput(Inputs.ChannelId);
+	const mentionToUser = getOptionalInput(Inputs.MentionToUser);
+	const mentionToGroup = getOptionalInput(Inputs.MentionToGroup);
+	const authorizedUsers = getOptionalListInput(Inputs.AuthorizedUsers);
 
 	return {
 		botToken,
@@ -25,18 +28,32 @@ export function getInputs(): SlackApprovalInputs {
 		channelId,
 		mentionToUser,
 		mentionToGroup,
+		authorizedUsers,
 	};
 }
 
-function getRequiredInput(name: string): string {
+function getRequiredInput(name: Inputs): string {
 	return core.getInput(name, { required: true });
 }
 
-function getOptionalInput(name: string): Option<string> {
+function getOptionalInput(name: Inputs): Option<string> {
 	const value = core.getInput(name);
 	if (value === "") {
 		return none;
 	}
 
 	return some(value);
+}
+
+function getOptionalListInput(name: Inputs): Option<string[]> {
+	const value = core.getInput(name);
+	if (value === "") {
+		return none;
+	}
+	const res: string[] = [];
+	const values = value.split(",");
+	for (const v of values) {
+		res.push(v.trim());
+	}
+	return some(res);
 }
