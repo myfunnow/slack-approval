@@ -1,9 +1,9 @@
 import * as core from "@actions/core";
-import { App, LogLevel, type BlockAction } from "@slack/bolt";
+import { App, type BlockAction, LogLevel } from "@slack/bolt";
 import { WebClient } from "@slack/web-api";
-import { isNone, isSome, type Option } from "fp-ts/lib/Option";
+import { type Option, isNone, isSome } from "fp-ts/lib/Option";
 import { getGitHubInfo } from "./helper/github_info_helper";
-import { getInputs, type SlackApprovalInputs } from "./helper/input_helper";
+import { type SlackApprovalInputs, getInputs } from "./helper/input_helper";
 
 async function run(inputs: SlackApprovalInputs, app: App): Promise<void> {
 	try {
