@@ -37,7 +37,11 @@ async function run(inputs: SlackApprovalInputs, app: App): Promise<void> {
 						fields: [
 							{
 								type: "mrkdwn",
-								text: `*ID:*\n[${githubInfo.runId}](${githubInfo.actionUrl})`,
+								text: `*ID:*\n${githubInfo.runId}`,
+							},
+							{
+								type: "mrkdwn",
+								text: `*Attempt:*\n${githubInfo.attempt}`,
 							},
 							{
 								type: "mrkdwn",
@@ -46,10 +50,6 @@ async function run(inputs: SlackApprovalInputs, app: App): Promise<void> {
 							{
 								type: "mrkdwn",
 								text: `*Workflow:*\n${githubInfo.workflow}`,
-							},
-							{
-								type: "mrkdwn",
-								text: `*Attempt:*\n${githubInfo.attempt}`,
 							},
 							{
 								type: "mrkdwn",
@@ -64,6 +64,13 @@ async function run(inputs: SlackApprovalInputs, app: App): Promise<void> {
 								text: `*SHA:*\n${githubInfo.sha}`,
 							},
 						],
+					},
+					{
+						type: "section",
+						text: {
+							type: "mrkdwn",
+							text: githubInfo.actionUrl,
+						},
 					},
 					{
 						type: "actions",

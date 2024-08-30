@@ -85607,7 +85607,11 @@ function run(inputs, app) {
                             fields: [
                                 {
                                     type: "mrkdwn",
-                                    text: `*ID:*\n[${githubInfo.runId}](${githubInfo.actionUrl})`,
+                                    text: `*ID:*\n${githubInfo.runId}`,
+                                },
+                                {
+                                    type: "mrkdwn",
+                                    text: `*Attempt:*\n${githubInfo.attempt}`,
                                 },
                                 {
                                     type: "mrkdwn",
@@ -85616,10 +85620,6 @@ function run(inputs, app) {
                                 {
                                     type: "mrkdwn",
                                     text: `*Workflow:*\n${githubInfo.workflow}`,
-                                },
-                                {
-                                    type: "mrkdwn",
-                                    text: `*Attempt:*\n${githubInfo.attempt}`,
                                 },
                                 {
                                     type: "mrkdwn",
@@ -85634,6 +85634,13 @@ function run(inputs, app) {
                                     text: `*SHA:*\n${githubInfo.sha}`,
                                 },
                             ],
+                        },
+                        {
+                            type: "section",
+                            text: {
+                                type: "mrkdwn",
+                                text: githubInfo.actionUrl,
+                            },
                         },
                         {
                             type: "actions",
@@ -85767,7 +85774,6 @@ function main() {
         run(inputs, app);
     });
 }
-main();
 
 
 /***/ }),
