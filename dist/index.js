@@ -85436,6 +85436,9 @@ function getGitHubInfo() {
     const workflow = process.env.GITHUB_WORKFLOW || "";
     const runnerOS = process.env.RUNNER_OS || "";
     const actor = process.env.GITHUB_ACTOR || "";
+    const attempt = Number.parseInt(process.env.GITHUB_RUN_ATTEMPT || "0");
+    const ref = process.env.GITHUB_REF || "";
+    const sha = process.env.GITHUB_SHA || "";
     return {
         serverUrl,
         repo,
@@ -85444,6 +85447,9 @@ function getGitHubInfo() {
         workflow,
         runnerOS,
         actor,
+        attempt,
+        ref,
+        sha,
     };
 }
 
@@ -85571,6 +85577,7 @@ const web_api_1 = __nccwpck_require__(60431);
 const Option_1 = __nccwpck_require__(2569);
 const github_info_helper_1 = __nccwpck_require__(70885);
 const input_helper_1 = __nccwpck_require__(9941);
+const logger_1 = __nccwpck_require__(34636);
 function run(inputs, app) {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -85583,7 +85590,7 @@ function run(inputs, app) {
             if ((0, Option_1.isSome)(inputs.mentionToGroup)) {
                 title += `<!subteam^${inputs.mentionToGroup.value}>\n`;
             }
-            title += "*GitHub Action Approval request*";
+            title += "*GitHub Action Approval Request*";
             (() => __awaiter(this, void 0, void 0, function* () {
                 yield web.chat.postMessage({
                     channel: inputs.channelId,
@@ -85600,19 +85607,11 @@ function run(inputs, app) {
                             fields: [
                                 {
                                     type: "mrkdwn",
-                                    text: `*GitHub Actor:*\n${githubInfo.actor}`,
+                                    text: `*ID:*\n[${githubInfo.runId}](${githubInfo.actionUrl})`,
                                 },
                                 {
                                     type: "mrkdwn",
-                                    text: `*Repos:*\n${githubInfo.serverUrl}/${githubInfo.repo}`,
-                                },
-                                {
-                                    type: "mrkdwn",
-                                    text: `*Actions URL:*\n${githubInfo.actionUrl}`,
-                                },
-                                {
-                                    type: "mrkdwn",
-                                    text: `*GITHUB_RUN_ID:*\n${githubInfo.runId}`,
+                                    text: `*Repo:*\n${githubInfo.serverUrl}/${githubInfo.repo}`,
                                 },
                                 {
                                     type: "mrkdwn",
@@ -85620,7 +85619,19 @@ function run(inputs, app) {
                                 },
                                 {
                                     type: "mrkdwn",
-                                    text: `*RunnerOS:*\n${githubInfo.runnerOS}`,
+                                    text: `*Attempt:*\n${githubInfo.attempt}`,
+                                },
+                                {
+                                    type: "mrkdwn",
+                                    text: `*Actor:*\n${githubInfo.actor}`,
+                                },
+                                {
+                                    type: "mrkdwn",
+                                    text: `*Ref:*\n${githubInfo.ref}`,
+                                },
+                                {
+                                    type: "mrkdwn",
+                                    text: `*SHA:*\n${githubInfo.sha}`,
                                 },
                             ],
                         },
@@ -85744,18 +85755,97 @@ function isAuthorizedUser(userId, authorizedUsers) {
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
         const inputs = (0, input_helper_1.getInputs)();
+        const logger = new logger_1.GitHubActionsLogger();
         const app = new bolt_1.App({
             token: inputs.botToken,
             signingSecret: inputs.signingSecret,
             appToken: inputs.appToken,
             socketMode: true,
             port: 3000,
-            logLevel: bolt_1.LogLevel.DEBUG,
+            logger: logger,
         });
         run(inputs, app);
     });
 }
 main();
+
+
+/***/ }),
+
+/***/ 34636:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.GitHubActionsLogger = void 0;
+const core = __importStar(__nccwpck_require__(42186));
+const logger_1 = __nccwpck_require__(32704);
+class GitHubActionsLogger {
+    getLevel() {
+        return logger_1.LogLevel.INFO;
+    }
+    /**
+     * Sets the instance's log level so that only messages which are equal or more severe are output to the console.
+     */
+    setLevel(level) { }
+    /**
+     * Set the instance's name, which will appear on each log line before the message.
+     */
+    setName(name) { }
+    /**
+     * Log a debug message
+     */
+    // biome-ignore lint/suspicious/noExplicitAny: upstream
+    debug(...msg) {
+        core.debug(msg.join(" "));
+    }
+    /**
+     * Log an info message
+     */
+    // biome-ignore lint/suspicious/noExplicitAny: upstream
+    info(...msg) {
+        core.info(msg.join(" "));
+    }
+    /**
+     * Log a warning message
+     */
+    // biome-ignore lint/suspicious/noExplicitAny: upstream
+    warn(...msg) {
+        core.warning(msg.join(" "));
+    }
+    /**
+     * Log an error message
+     */
+    // biome-ignore lint/suspicious/noExplicitAny: upstream
+    error(...msg) {
+        core.error(msg.join(" "));
+    }
+}
+exports.GitHubActionsLogger = GitHubActionsLogger;
 
 
 /***/ }),

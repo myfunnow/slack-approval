@@ -19,7 +19,7 @@ async function run(inputs: SlackApprovalInputs, app: App): Promise<void> {
 		if (isSome(inputs.mentionToGroup)) {
 			title += `<!subteam^${inputs.mentionToGroup.value}>\n`;
 		}
-		title += "*GitHub Action Approval request*";
+		title += "*GitHub Action Approval Request*";
 
 		(async () => {
 			await web.chat.postMessage({
@@ -37,19 +37,11 @@ async function run(inputs: SlackApprovalInputs, app: App): Promise<void> {
 						fields: [
 							{
 								type: "mrkdwn",
-								text: `*GitHub Actor:*\n${githubInfo.actor}`,
+								text: `*ID:*\n[${githubInfo.runId}](${githubInfo.actionUrl})`,
 							},
 							{
 								type: "mrkdwn",
-								text: `*Repos:*\n${githubInfo.serverUrl}/${githubInfo.repo}`,
-							},
-							{
-								type: "mrkdwn",
-								text: `*Actions URL:*\n${githubInfo.actionUrl}`,
-							},
-							{
-								type: "mrkdwn",
-								text: `*GITHUB_RUN_ID:*\n${githubInfo.runId}`,
+								text: `*Repo:*\n${githubInfo.serverUrl}/${githubInfo.repo}`,
 							},
 							{
 								type: "mrkdwn",
@@ -57,7 +49,19 @@ async function run(inputs: SlackApprovalInputs, app: App): Promise<void> {
 							},
 							{
 								type: "mrkdwn",
-								text: `*RunnerOS:*\n${githubInfo.runnerOS}`,
+								text: `*Attempt:*\n${githubInfo.attempt}`,
+							},
+							{
+								type: "mrkdwn",
+								text: `*Actor:*\n${githubInfo.actor}`,
+							},
+							{
+								type: "mrkdwn",
+								text: `*Ref:*\n${githubInfo.ref}`,
+							},
+							{
+								type: "mrkdwn",
+								text: `*SHA:*\n${githubInfo.sha}`,
 							},
 						],
 					},

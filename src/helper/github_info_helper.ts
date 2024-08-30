@@ -6,6 +6,9 @@ export type GitHubInfo = {
 	workflow: string;
 	runnerOS: string;
 	actor: string;
+	attempt: number;
+	ref: string;
+	sha: string;
 };
 
 export function getGitHubInfo(): GitHubInfo {
@@ -16,6 +19,9 @@ export function getGitHubInfo(): GitHubInfo {
 	const workflow = process.env.GITHUB_WORKFLOW || "";
 	const runnerOS = process.env.RUNNER_OS || "";
 	const actor = process.env.GITHUB_ACTOR || "";
+	const attempt = Number.parseInt(process.env.GITHUB_RUN_ATTEMPT || "0");
+	const ref = process.env.GITHUB_REF || "";
+	const sha = process.env.GITHUB_SHA || "";
 
 	return {
 		serverUrl,
@@ -25,5 +31,8 @@ export function getGitHubInfo(): GitHubInfo {
 		workflow,
 		runnerOS,
 		actor,
+		attempt,
+		ref,
+		sha,
 	};
 }
