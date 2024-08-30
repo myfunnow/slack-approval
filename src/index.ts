@@ -4,6 +4,7 @@ import { WebClient } from "@slack/web-api";
 import { type Option, isNone, isSome } from "fp-ts/lib/Option";
 import { getGitHubInfo } from "./helper/github_info_helper";
 import { type SlackApprovalInputs, getInputs } from "./helper/input_helper";
+import { GitHubActionsLogger } from "./logger";
 
 async function run(inputs: SlackApprovalInputs, app: App): Promise<void> {
 	try {
@@ -197,6 +198,7 @@ function isAuthorizedUser(
 
 async function main() {
 	const inputs = getInputs();
+	const logger = new GitHubActionsLogger();
 
 	const app = new App({
 		token: inputs.botToken,
@@ -204,10 +206,8 @@ async function main() {
 		appToken: inputs.appToken,
 		socketMode: true,
 		port: 3000,
-		logLevel: LogLevel.DEBUG,
+		logger: logger,
 	});
 
 	run(inputs, app);
 }
-
-main();
