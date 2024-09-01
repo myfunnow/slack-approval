@@ -85774,6 +85774,7 @@ function main() {
         run(inputs, app);
     });
 }
+main();
 
 
 /***/ }),
