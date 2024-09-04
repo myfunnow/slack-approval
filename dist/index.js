@@ -85416,6 +85416,7 @@ exports.Inputs = {
     MentionToUser: "mention-to-user",
     MentionToGroup: "mention-to-group",
     AuthorizedUsers: "authorized-users",
+    Title: "title",
 };
 
 
@@ -85497,6 +85498,7 @@ function getInputs() {
     const mentionToUser = getOptionalInput(constants_1.Inputs.MentionToUser);
     const mentionToGroup = getOptionalInput(constants_1.Inputs.MentionToGroup);
     const authorizedUsers = getOptionalListInput(constants_1.Inputs.AuthorizedUsers);
+    const title = getOptionalInput(constants_1.Inputs.Title);
     return {
         botToken,
         signingSecret,
@@ -85505,6 +85507,7 @@ function getInputs() {
         mentionToUser,
         mentionToGroup,
         authorizedUsers,
+        title,
     };
 }
 function getRequiredInput(name) {
@@ -85583,23 +85586,27 @@ function run(inputs, app) {
         try {
             const web = new web_api_1.WebClient(inputs.botToken);
             const githubInfo = (0, github_info_helper_1.getGitHubInfo)();
-            let title = "";
+            let mentions = "";
+            let title = "GitHub Actions Approval Request";
             if ((0, Option_1.isSome)(inputs.mentionToUser)) {
-                title += `<@${inputs.mentionToUser.value}>\n`;
+                mentions += `<@${inputs.mentionToUser.value}> `;
             }
             if ((0, Option_1.isSome)(inputs.mentionToGroup)) {
-                title += `<!subteam^${inputs.mentionToGroup.value}>\n`;
+                mentions += `<!subteam^${inputs.mentionToGroup.value}> `;
             }
-            title += "*GitHub Action Approval Request*";
+            if ((0, Option_1.isSome)(inputs.title)) {
+                title = inputs.title.value;
+            }
             (() => __awaiter(this, void 0, void 0, function* () {
                 yield web.chat.postMessage({
                     channel: inputs.channelId,
+                    text: title,
                     blocks: [
                         {
                             type: "section",
                             text: {
                                 type: "mrkdwn",
-                                text: title,
+                                text: `*${title}*`,
                             },
                         },
                         {
@@ -85607,19 +85614,19 @@ function run(inputs, app) {
                             fields: [
                                 {
                                     type: "mrkdwn",
-                                    text: `*ID:*\n${githubInfo.runId}`,
+                                    text: `*ID*\n${githubInfo.runId}`,
                                 },
                                 {
                                     type: "mrkdwn",
-                                    text: `*Attempt:*\n${githubInfo.attempt}`,
+                                    text: `*Attempt*\n${githubInfo.attempt}`,
                                 },
                                 {
                                     type: "mrkdwn",
-                                    text: `*Repo:*\n${githubInfo.serverUrl}/${githubInfo.repo}`,
+                                    text: `*Repo*\n${githubInfo.serverUrl}/${githubInfo.repo}`,
                                 },
                                 {
                                     type: "mrkdwn",
-                                    text: `*Workflow:*\n${githubInfo.workflow}`,
+                                    text: `*Workflow*\n${githubInfo.workflow}`,
                                 },
                                 {
                                     type: "mrkdwn",
@@ -85627,11 +85634,15 @@ function run(inputs, app) {
                                 },
                                 {
                                     type: "mrkdwn",
-                                    text: `*Ref:*\n${githubInfo.ref}`,
+                                    text: `*Ref*\n${githubInfo.ref}`,
                                 },
                                 {
                                     type: "mrkdwn",
-                                    text: `*SHA:*\n${githubInfo.sha}`,
+                                    text: `*SHA*\n${githubInfo.sha}`,
+                                },
+                                {
+                                    type: "mrkdwn",
+                                    text: `*URL*\n${githubInfo.actionUrl}`,
                                 },
                             ],
                         },
@@ -85639,7 +85650,7 @@ function run(inputs, app) {
                             type: "section",
                             text: {
                                 type: "mrkdwn",
-                                text: githubInfo.actionUrl,
+                                text: mentions,
                             },
                         },
                         {

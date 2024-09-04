@@ -9,27 +9,29 @@ import { GitHubActionsLogger } from "./logger";
 async function run(inputs: SlackApprovalInputs, app: App): Promise<void> {
 	try {
 		const web = new WebClient(inputs.botToken);
-
 		const githubInfo = getGitHubInfo();
+		let mentions = "";
+		let title = "GitHub Actions Approval Request";
 
-		let title = "";
 		if (isSome(inputs.mentionToUser)) {
-			title += `<@${inputs.mentionToUser.value}>\n`;
+			mentions += `<@${inputs.mentionToUser.value}> `;
 		}
 		if (isSome(inputs.mentionToGroup)) {
-			title += `<!subteam^${inputs.mentionToGroup.value}>\n`;
+			mentions += `<!subteam^${inputs.mentionToGroup.value}> `;
 		}
-		title += "*GitHub Action Approval Request*";
-
+		if (isSome(inputs.title)) {
+			title = inputs.title.value;
+		}
 		(async () => {
 			await web.chat.postMessage({
 				channel: inputs.channelId,
+				text: title,
 				blocks: [
 					{
 						type: "section",
 						text: {
 							type: "mrkdwn",
-							text: title,
+							text: `*${title}*`,
 						},
 					},
 					{
@@ -37,19 +39,19 @@ async function run(inputs: SlackApprovalInputs, app: App): Promise<void> {
 						fields: [
 							{
 								type: "mrkdwn",
-								text: `*ID:*\n${githubInfo.runId}`,
+								text: `*ID*\n${githubInfo.runId}`,
 							},
 							{
 								type: "mrkdwn",
-								text: `*Attempt:*\n${githubInfo.attempt}`,
+								text: `*Attempt*\n${githubInfo.attempt}`,
 							},
 							{
 								type: "mrkdwn",
-								text: `*Repo:*\n${githubInfo.serverUrl}/${githubInfo.repo}`,
+								text: `*Repo*\n${githubInfo.serverUrl}/${githubInfo.repo}`,
 							},
 							{
 								type: "mrkdwn",
-								text: `*Workflow:*\n${githubInfo.workflow}`,
+								text: `*Workflow*\n${githubInfo.workflow}`,
 							},
 							{
 								type: "mrkdwn",
@@ -57,11 +59,15 @@ async function run(inputs: SlackApprovalInputs, app: App): Promise<void> {
 							},
 							{
 								type: "mrkdwn",
-								text: `*Ref:*\n${githubInfo.ref}`,
+								text: `*Ref*\n${githubInfo.ref}`,
 							},
 							{
 								type: "mrkdwn",
-								text: `*SHA:*\n${githubInfo.sha}`,
+								text: `*SHA*\n${githubInfo.sha}`,
+							},
+							{
+								type: "mrkdwn",
+								text: `*URL*\n${githubInfo.actionUrl}`,
 							},
 						],
 					},
@@ -69,7 +75,7 @@ async function run(inputs: SlackApprovalInputs, app: App): Promise<void> {
 						type: "section",
 						text: {
 							type: "mrkdwn",
-							text: githubInfo.actionUrl,
+							text: mentions,
 						},
 					},
 					{
@@ -186,7 +192,6 @@ async function run(inputs: SlackApprovalInputs, app: App): Promise<void> {
 				process.exit(1);
 			},
 		);
-
 		(async () => {
 			await app.start(3000);
 			console.log("Waiting Approval reaction.....");
