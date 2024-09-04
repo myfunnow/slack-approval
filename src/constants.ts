@@ -7,6 +7,6 @@ export const Inputs = {
 	MentionToGroup: "mention-to-group",
 	AuthorizedUsers: "authorized-users",
 	Title: "title",
-} as const;
+} as const
 
-export type Inputs = (typeof Inputs)[keyof typeof Inputs];
+export type Inputs = (typeof Inputs)[keyof typeof Inputs]

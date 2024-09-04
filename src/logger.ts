@@ -1,9 +1,9 @@
-import * as core from "@actions/core";
-import { LogLevel, type Logger } from "@slack/logger";
+import * as core from "@actions/core"
+import { LogLevel, type Logger } from "@slack/logger"
 
 export class GitHubActionsLogger implements Logger {
 	public getLevel(): LogLevel {
-		return LogLevel.INFO;
+		return LogLevel.INFO
 	}
 
 	/**
@@ -21,7 +21,7 @@ export class GitHubActionsLogger implements Logger {
 	 */
 	// biome-ignore lint/suspicious/noExplicitAny: upstream
 	public debug(...msg: any[]): void {
-		core.debug(msg.join(" "));
+		core.debug(msg.join(" "))
 	}
 
 	/**
@@ -29,7 +29,7 @@ export class GitHubActionsLogger implements Logger {
 	 */
 	// biome-ignore lint/suspicious/noExplicitAny: upstream
 	public info(...msg: any[]): void {
-		core.info(msg.join(" "));
+		core.info(msg.join(" "))
 	}
 
 	/**
@@ -37,7 +37,7 @@ export class GitHubActionsLogger implements Logger {
 	 */
 	// biome-ignore lint/suspicious/noExplicitAny: upstream
 	public warn(...msg: any[]): void {
-		core.warning(msg.join(" "));
+		core.warning(msg.join(" "))
 	}
 
 	/**
@@ -45,6 +45,6 @@ export class GitHubActionsLogger implements Logger {
 	 */
 	// biome-ignore lint/suspicious/noExplicitAny: upstream
 	public error(...msg: any[]): void {
-		core.error(msg.join(" "));
+		core.error(msg.join(" "))
 	}
 }
