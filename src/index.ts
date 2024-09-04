@@ -47,7 +47,7 @@ async function run(inputs: SlackApprovalInputs, app: App): Promise<void> {
 							},
 							{
 								type: "mrkdwn",
-								text: `*Repo*\n${githubInfo.serverUrl}/${githubInfo.repo}`,
+								text: `*Repo*\n${githubInfo.repo}`,
 							},
 							{
 								type: "mrkdwn",

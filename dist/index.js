@@ -85623,7 +85623,7 @@ function run(inputs, app) {
                                 },
                                 {
                                     type: "mrkdwn",
-                                    text: `*Repo*\n${githubInfo.serverUrl}/${githubInfo.repo}`,
+                                    text: `*Repo*\n${githubInfo.repo}`,
                                 },
                                 {
                                     type: "mrkdwn",
