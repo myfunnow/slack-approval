@@ -11,7 +11,6 @@ async function run(inputs: SlackApprovalInputs, app: App): Promise<void> {
 		const web = new WebClient(inputs.botToken)
 		const githubInfo = getGitHubInfo()
 		let mentions = ""
-		let title = "GitHub Actions Approval Request"
 
 		if (isSome(inputs.mentionToUser)) {
 			mentions += `<@${inputs.mentionToUser.value}> `
@@ -19,19 +18,16 @@ async function run(inputs: SlackApprovalInputs, app: App): Promise<void> {
 		if (isSome(inputs.mentionToGroup)) {
 			mentions += `<!subteam^${inputs.mentionToGroup.value}> `
 		}
-		if (isSome(inputs.title)) {
-			title = inputs.title.value
-		}
 		;(async () => {
 			await web.chat.postMessage({
 				channel: inputs.channelId,
-				text: title,
+				text: inputs.title,
 				blocks: [
 					{
 						type: "section",
 						text: {
 							type: "mrkdwn",
-							text: `*${title}*`,
+							text: `*${inputs.title}*`,
 						},
 					},
 					{

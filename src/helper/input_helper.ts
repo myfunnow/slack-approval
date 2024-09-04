@@ -10,7 +10,7 @@ export type SlackApprovalInputs = {
 	mentionToUser: Option<string>
 	mentionToGroup: Option<string>
 	authorizedUsers: Option<string[]>
-	title: Option<string>
+	title: string
 }
 
 export function getInputs(): SlackApprovalInputs {
@@ -21,7 +21,7 @@ export function getInputs(): SlackApprovalInputs {
 	const mentionToUser = getOptionalInput(Inputs.MentionToUser)
 	const mentionToGroup = getOptionalInput(Inputs.MentionToGroup)
 	const authorizedUsers = getOptionalListInput(Inputs.AuthorizedUsers)
-	const title = getOptionalInput(Inputs.Title)
+	const title = getRequiredInput(Inputs.Title)
 
 	return {
 		botToken,

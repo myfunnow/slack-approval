@@ -85498,7 +85498,7 @@ function getInputs() {
     const mentionToUser = getOptionalInput(constants_1.Inputs.MentionToUser);
     const mentionToGroup = getOptionalInput(constants_1.Inputs.MentionToGroup);
     const authorizedUsers = getOptionalListInput(constants_1.Inputs.AuthorizedUsers);
-    const title = getOptionalInput(constants_1.Inputs.Title);
+    const title = getRequiredInput(constants_1.Inputs.Title);
     return {
         botToken,
         signingSecret,
@@ -85587,27 +85587,23 @@ function run(inputs, app) {
             const web = new web_api_1.WebClient(inputs.botToken);
             const githubInfo = (0, github_info_helper_1.getGitHubInfo)();
             let mentions = "";
-            let title = "GitHub Actions Approval Request";
             if ((0, Option_1.isSome)(inputs.mentionToUser)) {
                 mentions += `<@${inputs.mentionToUser.value}> `;
             }
             if ((0, Option_1.isSome)(inputs.mentionToGroup)) {
                 mentions += `<!subteam^${inputs.mentionToGroup.value}> `;
             }
-            if ((0, Option_1.isSome)(inputs.title)) {
-                title = inputs.title.value;
-            }
             ;
             (() => __awaiter(this, void 0, void 0, function* () {
                 yield web.chat.postMessage({
                     channel: inputs.channelId,
-                    text: title,
+                    text: inputs.title,
                     blocks: [
                         {
                             type: "section",
                             text: {
                                 type: "mrkdwn",
-                                text: `*${title}*`,
+                                text: `*${inputs.title}*`,
                             },
                         },
                         {
