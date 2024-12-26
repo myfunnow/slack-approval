@@ -1,6 +1,6 @@
 # slack-approval
 
-Custom action to send approval request to Slack
+Github action to send approval request to Slack
 
 ![](img/approval.png)
 
@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: send approval
-        uses: Takashicc/slack-approval@main
+        uses: myfunnow/slack-approval@v1
         with:
           bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
           signing-secret: ${{ secrets.SLACK_SIGNING_SECRET }}
