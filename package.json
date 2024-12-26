@@ -1,6 +1,6 @@
 {
   "name": "slack-approval",
-  "version": "v1.1.0",
+  "version": "v1.3.0",
   "description": "Custom action to send approval request to Slack",
   "scripts": {
     "bundle": "npm run format && npm run lint && npm run check && npm run package",
@@ -13,20 +13,17 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@actions/core": "^1.10.1",
+    "@actions/core": "^1.11.1",
     "@actions/github": "^6.0.0",
-    "@slack/bolt": "^3.12.1",
+    "@slack/bolt": "^4.2.0",
     "@slack/logger": "^4.0.0",
-    "@slack/web-api": "^7.0.0",
-    "fp-ts": "^2.16.3"
+    "@slack/web-api": "^7.8.0",
+    "fp-ts": "^2.16.9"
   },
   "devDependencies": {
     "@biomejs/biome": "1.8.3",
     "@types/node": "^20.0.0",
-    "@vercel/ncc": "^0.38.1",
+    "@vercel/ncc": "^0.38.3",
     "typescript": "^5.0.0"
-  },
-  "volta": {
-    "node": "20.16.0"
   }
 }
