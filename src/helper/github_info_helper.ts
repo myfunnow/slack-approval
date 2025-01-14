@@ -18,7 +18,7 @@ export function getGitHubInfo(): GitHubInfo {
 	const actionUrl = `${serverUrl}/${repo}/actions/runs/${runId}`
 	const workflow = process.env.GITHUB_WORKFLOW || ""
 	const runnerOS = process.env.RUNNER_OS || ""
-	const actor = process.env.GITHUB_ACTOR || ""
+	const actor = process.env.GITHUB_TRIGGERING_ACTOR || ""
 	const attempt = Number.parseInt(process.env.GITHUB_RUN_ATTEMPT || "0")
 	const ref = process.env.GITHUB_REF || ""
 	const sha = process.env.GITHUB_SHA || ""
