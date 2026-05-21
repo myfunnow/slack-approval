@@ -20,7 +20,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: send approval
-        uses: myfunnow/slack-approval@v1
+        uses: myfunnow/slack-approval@v2
         with:
           bot-token: ${{ secrets.SLACK_BOT_TOKEN }}
           signing-secret: ${{ secrets.SLACK_SIGNING_SECRET }}
